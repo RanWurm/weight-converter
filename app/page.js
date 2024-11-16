@@ -1,16 +1,44 @@
-"use client"
-
-import { useState } from 'react';
-import Head from 'next/head';
+"use client";
+import { useState, useRef } from "react";
+import Head from "next/head";
 
 export default function Home() {
-  const [weight, setWeight] = useState('');
+  const [weight, setWeight] = useState("");
+  const [percentage, setPercentage] = useState("");
   const [convertedValue, setConvertedValue] = useState(null);
+  const [showImage, setShowImage] = useState(false);
 
-  const handleConvert = () => {
-    // Replace this with your calculation logic
-    const result = weight * 2; // Example placeholder calculation
-    setConvertedValue(result);
+  const audioRef = useRef(null);
+
+  const handleConvert = async () => {
+    if (percentage === "0") {
+      // Start music and animation
+      setShowImage(true);
+
+      try {
+        await audioRef.current.play();
+      } catch (error) {
+        console.error("Audio play failed", error);
+      }
+
+      // Stop music and hide image after 15 seconds
+      setTimeout(() => {
+        setShowImage(false);
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setConvertedValue(null);
+      }, 15000); // Match animation duration
+    } else {
+      if (weight == 0 || percentage == 0) {
+        setConvertedValue(0);
+      }
+      const p = percentage / 100;
+      const x = weight / p;
+      const result = x - weight;
+      setConvertedValue(result);
+    }
   };
 
   return (
@@ -29,7 +57,7 @@ export default function Home() {
               htmlFor="weight"
               className="block text-sm font-medium text-gray-700"
             >
-              Enter weight (grams)
+              תכניס משקל בגרמים כפרה
             </label>
             <input
               type="number"
@@ -38,14 +66,36 @@ export default function Home() {
               onChange={(e) => setWeight(e.target.value)}
               className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
               placeholder="Enter weight in grams"
-              inputMode="decimal" // Helps with numeric keyboards
             />
             {weight && (
               <p className="mt-2 text-sm text-gray-600">
-                You entered: <span className="font-medium text-purple-600">{weight} grams</span>
+                 בחרת <span className="font-medium text-purple-600">{weight} גרם אבא</span>
               </p>
             )}
           </div>
+
+          <div className="mb-4">
+            <label
+              htmlFor="percentage"
+              className="block text-sm font-medium text-gray-700"
+            >
+               כמה אחוז ישך ביד ? אם אתה בוחר 0 אתה מת
+            </label>
+            <input
+              type="number"
+              id="percentage"
+              value={percentage}
+              onChange={(e) => setPercentage(e.target.value)}
+              className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg"
+              placeholder="Enter percentage"
+            />
+            {percentage && (
+              <p className="mt-2 text-sm text-gray-600">
+                <span className="font-medium text-purple-600">בחרת {percentage} אחוז אבא</span>
+              </p>
+            )}
+          </div>
+
           <button
             onClick={handleConvert}
             className="w-full bg-purple-500 text-white px-4 py-3 rounded-lg shadow-md hover:bg-purple-600 transition duration-300 text-lg"
@@ -60,7 +110,34 @@ export default function Home() {
             </div>
           )}
         </div>
+        {/* Animation and Music */}
+        {showImage && (
+          <img
+            src="/i_said_no.jpg"
+            alt="Falling Animation"
+            className="absolute top-0 w-64 h-64 animate-fall"
+            style={{ animationDuration: "15s" }}
+          />
+        )}
+        <audio ref={audioRef}>
+          <source src="/clown_music.mp3" type="audio/mpeg" />
+        </audio>
       </div>
+      <style jsx>{`
+        @keyframes fall {
+          from {
+            transform: translateY(-100%);
+          }
+          to {
+            transform: translateY(100vh);
+          }
+        }
+        .animate-fall {
+          animation-name: fall;
+          animation-timing-function: linear;
+          animation-iteration-count: 1;
+        }
+      `}</style>
     </>
   );
 }
